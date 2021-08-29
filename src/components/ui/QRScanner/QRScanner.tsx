@@ -6,6 +6,10 @@ import Panel from "../Panel/Panel";
 import { Text } from "@ui-kitten/components";
 import utils from "../../../libs/utils/utils";
 import { useRef } from "react";
+import Sound from "react-native-sound";
+import { useMemo } from "react";
+
+Sound.setCategory("Playback");
 
 const styles = StyleSheet.create({
   container: {},
@@ -47,6 +51,31 @@ const QRScanner: React.FC<QRScannerProps> = ({
   const [textScanned, setTextScanned] = useState("");
   const [pointsText, setPointsText] = useState("");
 
+  const whoosh = useMemo(() => {
+    return new Sound("beep.mp3", Sound.MAIN_BUNDLE, (error) => {
+      if (error) {
+        console.log("failed to load the sound", error);
+        return;
+      }
+      // loaded successfully
+      console.log(
+        "duration in seconds: " +
+          whoosh.getDuration() +
+          "number of channels: " +
+          whoosh.getNumberOfChannels(),
+      );
+
+      // Play the sound with an onEnd callback
+      whoosh.play((success) => {
+        if (success) {
+          console.log("successfully finished playing");
+        } else {
+          console.log("playback failed due to audio decoding errors");
+        }
+      });
+    });
+  }, []);
+
   useEffect(() => {
     //console.log(TAG, "point", pointsAwait);
     if (textScanned !== "") {
@@ -71,12 +100,13 @@ const QRScanner: React.FC<QRScannerProps> = ({
     (text: string = "") => {
       if (text !== "" && text !== lastScanned.text) {
         onRead(text);
+        whoosh.play();
         setTimeout(() => {
           lastScanned.text = "";
         }, 500);
       }
     },
-    [lastScanned, onRead],
+    [lastScanned, onRead, whoosh],
   );
   return (
     <Panel flex={1} style={style}>
